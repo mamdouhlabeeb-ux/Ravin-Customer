@@ -26,13 +26,13 @@
     .btn-secondary { background: #f1f5f9; color: #334155; width: 100%; margin-top: 8px; }
     .btn-secondary:hover { background: #e2e8f0; }
 
-    /* شاشة الباركود: خلفية بيضاء بالكامل لسهولة القراءة بالليزر */
     #barcodeScreen { display: none; }
     .barcode-card { background: #ffffff; border: 2px solid #cbd5e1; border-radius: 14px; padding: 16px 10px; text-align: center; }
     .barcode-item { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px dashed #e2e8f0; }
-    .barcode-item:last-of-type { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+    .barcode-item:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
     .barcode-title { font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 4px; }
     .barcode-item svg { display: block; width: 100%; height: auto; margin: 0 auto; background: #ffffff; }
+    .barcode-val { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #334155; margin-top: 2px; word-break: break-all; }
     .hint { font-size: 12px; color: #64748b; text-align: center; margin: 10px 0 0; }
   </style>
 </head>
@@ -79,20 +79,23 @@
         <div class="barcode-item">
           <div class="barcode-title">1. الاسم</div>
           <svg id="barcodeName"></svg>
+          <div class="barcode-val" id="valName" dir="ltr"></div>
         </div>
 
         <div class="barcode-item">
           <div class="barcode-title">2. الإيميل</div>
           <svg id="barcodeEmail"></svg>
+          <div class="barcode-val" id="valEmail" dir="ltr"></div>
         </div>
 
         <div class="barcode-item">
           <div class="barcode-title">3. رقم الموبايل</div>
           <svg id="barcodePhone"></svg>
+          <div class="barcode-val" id="valPhone" dir="ltr"></div>
         </div>
       </div>
 
-      <p class="hint">ارفع سطوع الشاشة لأعلى درجة لتسهيل المسح</p>
+      <p class="hint">كل باركود فيه Tab في آخره. ارفع سطوع الشاشة لأعلى درجة لتسهيل المسح.</p>
       <button type="button" class="btn btn-secondary" id="editBtn">تعديل البيانات</button>
     </div>
 
@@ -122,33 +125,26 @@
       svg.removeAttribute('height');
     }
 
+    // Code 128 بيدعم حرف Tab، فبنضيفه في آخر كل باركود
+    function drawBarcode(svgId, value) {
+      try {
+        JsBarcode('#' + svgId, value + '\t', {
+          format: 'CODE128', width: 2, height: 80, displayValue: false, margin: 14
+        });
+        fitSvg(svgId);
+      } catch (e) { console.error(e); }
+    }
+
     function generateBarcodes(name, email, phone) {
-      document.getElementById('displayName').innerText = name;
       const latinName = transliterate(name);
+      document.getElementById('displayName').innerText = name;
+      document.getElementById('valName').innerText = latinName;
+      document.getElementById('valEmail').innerText = email;
+      document.getElementById('valPhone').innerText = phone;
 
-      try {
-        JsBarcode("#barcodeName", latinName, {
-          format: "CODE39", width: 2, height: 70, displayValue: true,
-          text: '*' + latinName + '*', fontSize: 14, margin: 12
-        });
-        fitSvg('barcodeName');
-      } catch (e) { console.error(e); }
-
-      try {
-        JsBarcode("#barcodeEmail", email, {
-          format: "CODE128", width: 2, height: 70, displayValue: true,
-          fontSize: 13, margin: 12
-        });
-        fitSvg('barcodeEmail');
-      } catch (e) { console.error(e); }
-
-      try {
-        JsBarcode("#barcodePhone", phone, {
-          format: "CODE39", width: 2.4, height: 80, displayValue: true,
-          text: '*' + phone + '*', fontSize: 16, margin: 12
-        });
-        fitSvg('barcodePhone');
-      } catch (e) { console.error(e); }
+      drawBarcode('barcodeName', latinName);
+      drawBarcode('barcodeEmail', email);
+      drawBarcode('barcodePhone', phone);
     }
 
     function showError(msg) {
