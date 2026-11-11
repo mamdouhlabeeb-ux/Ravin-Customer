@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>تسجيل بيانات العميل</title>
+  <title>Ravin-Customer</title>
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,7 +14,7 @@
     .container { max-width: 520px; margin: 0 auto; }
     .card { background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 20px; }
     .header-banner { background: linear-gradient(135deg, #0f172a, #1e1b4b); color: white; border-radius: 16px; padding: 24px; margin-bottom: 20px; text-align: center; }
-    .header-banner h1 { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+    .header-banner h1 { font-size: 24px; font-weight: 800; letter-spacing: 0.5px; }
     .header-banner p { font-size: 13px; color: #cbd5e1; }
     .form-group { margin-bottom: 16px; }
     .form-group label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; color: #1e293b; }
@@ -34,6 +34,16 @@
     .barcode-item svg { display: block; width: 100%; height: auto; margin: 0 auto; background: #ffffff; }
     .barcode-val { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #334155; margin-top: 2px; word-break: break-all; }
     .hint { font-size: 12px; color: #64748b; text-align: center; margin: 10px 0 0; }
+    .btn-blue { background: #2563eb; color: #fff; width: 100%; margin-top: 14px; padding: 14px 20px; font-size: 15px; }
+    .btn-blue:hover { background: #1d4ed8; }
+
+    .fs-overlay { display: none; position: fixed; inset: 0; background: #ffffff; z-index: 9999; flex-direction: column; gap: 10px; padding: 14px 22px; overflow: hidden; }
+    .fs-overlay.open { display: flex; }
+    .fs-overlay.rotated { inset: auto; top: 0; left: 0; transform-origin: top left; transform: rotate(90deg) translateY(-100%); }
+    .fs-item { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+    .fs-item .fs-title { font-size: 13px; font-weight: 700; color: #475569; margin-bottom: 2px; text-align: center; }
+    .fs-item svg { flex: 1; min-height: 0; width: 100%; height: 100%; display: block; background: #fff; }
+    .fs-close { position: absolute; top: 8px; left: 10px; z-index: 2; background: #0f172a; color: #fff; border: none; border-radius: 8px; padding: 6px 12px; font-size: 13px; font-weight: 700; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -43,8 +53,7 @@
     <!-- شاشة إدخال البيانات -->
     <div id="formScreen">
       <div class="header-banner">
-        <h1>تسجيل بيانات العميل</h1>
-        <p>من فضلك اكتب بياناتك ثم اضغط إرسال</p>
+        <h1>Ravin-Customer</h1>
       </div>
 
       <div class="card">
@@ -77,28 +86,30 @@
         <h2 id="displayName" style="font-size: 20px; font-weight: 800; margin-bottom: 12px;"></h2>
 
         <div class="barcode-item">
-          <div class="barcode-title">1. الاسم</div>
-          <svg id="barcodeName"></svg>
-          <div class="barcode-val" id="valName" dir="ltr"></div>
+          <div class="barcode-title">1. الاسم + الإيميل</div>
+          <svg id="barcodeNameEmail"></svg>
+          <div class="barcode-val" id="valNameEmail" dir="ltr"></div>
         </div>
 
         <div class="barcode-item">
-          <div class="barcode-title">2. الإيميل</div>
-          <svg id="barcodeEmail"></svg>
-          <div class="barcode-val" id="valEmail" dir="ltr"></div>
-        </div>
-
-        <div class="barcode-item">
-          <div class="barcode-title">3. رقم الموبايل</div>
+          <div class="barcode-title">2. رقم الموبايل</div>
           <svg id="barcodePhone"></svg>
           <div class="barcode-val" id="valPhone" dir="ltr"></div>
         </div>
       </div>
 
-      <p class="hint">كل باركود فيه Tab في آخره. ارفع سطوع الشاشة لأعلى درجة لتسهيل المسح.</p>
+      <button type="button" class="btn btn-blue" id="fsBtn">⛶ تكبير الباركود (شاشة كاملة)</button>
+
+      <p class="hint">الباركود الأول فيه Tab بين الاسم والإيميل وفي آخره، والتاني فيه Tab في آخره. ارفع سطوع الشاشة لأعلى درجة لتسهيل المسح.</p>
       <button type="button" class="btn btn-secondary" id="editBtn">تعديل البيانات</button>
     </div>
 
+  </div>
+
+  <div class="fs-overlay" id="fsOverlay">
+    <button type="button" class="fs-close" id="fsClose">✕ إغلاق</button>
+    <div class="fs-item"><div class="fs-title">1. الاسم + الإيميل</div><div id="fsSlot1" style="flex:1;min-height:0;display:flex;"></div></div>
+    <div class="fs-item"><div class="fs-title">2. رقم الموبايل</div><div id="fsSlot2" style="flex:1;min-height:0;display:flex;"></div></div>
   </div>
 
   <script>
@@ -138,12 +149,12 @@
     function generateBarcodes(name, email, phone) {
       const latinName = transliterate(name);
       document.getElementById('displayName').innerText = name;
-      document.getElementById('valName').innerText = latinName;
-      document.getElementById('valEmail').innerText = email;
+      document.getElementById('valNameEmail').innerText = latinName + '  [TAB]  ' + email;
       document.getElementById('valPhone').innerText = phone;
 
-      drawBarcode('barcodeName', latinName);
-      drawBarcode('barcodeEmail', email);
+      // باركود 1: الاسم + Tab + الإيميل (والـ Tab الأخير بيتضاف في drawBarcode)
+      drawBarcode('barcodeNameEmail', latinName + '\t' + email);
+      // باركود 2: رقم الموبايل
       drawBarcode('barcodePhone', phone);
     }
 
@@ -179,6 +190,59 @@
       document.getElementById('formScreen').style.display = 'none';
       document.getElementById('barcodeScreen').style.display = 'block';
       window.scrollTo(0, 0);
+    });
+
+    // ===== تكبير الباركود (شاشة كاملة + بالعرض) =====
+    const fsOverlay = document.getElementById('fsOverlay');
+
+    function layoutFs() {
+      if (!fsOverlay.classList.contains('open')) return;
+      if (window.innerHeight > window.innerWidth) {
+        // الموبايل لسه بالطول: لفّ الشاشة 90 درجة بالـ CSS
+        fsOverlay.classList.add('rotated');
+        fsOverlay.style.width = window.innerHeight + 'px';
+        fsOverlay.style.height = window.innerWidth + 'px';
+      } else {
+        fsOverlay.classList.remove('rotated');
+        fsOverlay.style.width = '';
+        fsOverlay.style.height = '';
+      }
+    }
+
+    function copyBarcode(srcId, slotId) {
+      const clone = document.getElementById(srcId).cloneNode(true);
+      clone.removeAttribute('id');
+      clone.setAttribute('preserveAspectRatio', 'none'); // يتمدد بالطول والعرض
+      const slot = document.getElementById(slotId);
+      slot.innerHTML = '';
+      slot.appendChild(clone);
+    }
+
+    async function openFs() {
+      copyBarcode('barcodeNameEmail', 'fsSlot1');
+      copyBarcode('barcodePhone', 'fsSlot2');
+      fsOverlay.classList.add('open');
+      layoutFs();
+      try { await document.documentElement.requestFullscreen(); } catch (e) {}
+      try { await screen.orientation.lock('landscape'); } catch (e) {}
+      layoutFs();
+      setTimeout(layoutFs, 300);
+    }
+
+    function closeFs() {
+      fsOverlay.classList.remove('open', 'rotated');
+      fsOverlay.style.width = '';
+      fsOverlay.style.height = '';
+      try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (e) {}
+      try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {}
+    }
+
+    document.getElementById('fsBtn').addEventListener('click', openFs);
+    document.getElementById('fsClose').addEventListener('click', closeFs);
+    window.addEventListener('resize', layoutFs);
+    window.addEventListener('orientationchange', function () { setTimeout(layoutFs, 200); });
+    document.addEventListener('fullscreenchange', function () {
+      if (!document.fullscreenElement && fsOverlay.classList.contains('open')) closeFs();
     });
 
     document.getElementById('editBtn').addEventListener('click', function () {
