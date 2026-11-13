@@ -3,12 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="only light">
+  <meta name="supported-color-schemes" content="light">
   <title>Ravin-Customer</title>
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <style>
+    :root { color-scheme: only light; }
+    html, body { background-color: #f8fafc; }
+    .barcode-item svg, .fs-item svg, .barcode-card, .fs-overlay { forced-color-adjust: none; -webkit-forced-color-adjust: none; color-scheme: only light; }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', system-ui, sans-serif; }
     body { background-color: #f8fafc; color: #0f172a; padding: 16px; line-height: 1.5; }
     .container { max-width: 520px; margin: 0 auto; }
@@ -140,7 +145,8 @@
     function drawBarcode(svgId, value) {
       try {
         JsBarcode('#' + svgId, value + '\t', {
-          format: 'CODE128', width: 2, height: 80, displayValue: false, margin: 14
+          format: 'CODE128', width: 2, height: 80, displayValue: false, margin: 14,
+          lineColor: '#000000', background: '#ffffff'
         });
         fitSvg(svgId);
       } catch (e) { console.error(e); }
